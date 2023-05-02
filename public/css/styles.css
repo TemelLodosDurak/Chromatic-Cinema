@@ -1,0 +1,174 @@
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    font-family: Arial, sans-serif;
+    transition: background-color 0.5s ease;
+  }
+  .bg-red {
+    background-color: rgb(194, 45, 45);
+  }
+
+  .bg-green {
+    background-color: rgb(51, 179, 51);
+  }
+
+  .bg-blue {
+    background-color: rgb(98, 98, 222);
+  }
+
+  .bg-yellow {
+    background-color: rgb(194, 194, 74);
+  }
+
+  .bg-purple {
+    background-color: rgb(192, 52, 192);
+  }
+
+  h1 {
+    margin-bottom: 20px;
+  }
+
+  .search-container {
+    margin-bottom: 20px;
+  }
+
+  .movies-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .movie-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 10px;
+    width: 200px;
+    cursor: pointer;
+    opacity: 1;
+    transition: opacity 0.3s ease, box-shadow 0.2s ease-in-out;
+  }
+
+  .movie-cards-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 20px;
+  }
+
+  .movie-card.show {
+    opacity: 1;
+  }
+
+  .movie-card:hover {
+    box-shadow: 0px 0px 10px 3px rgb(0, 0, 0);
+  }
+
+  .movie-poster {
+    width: 150px;
+    height: 225px;
+    object-fit: cover;
+    margin-bottom: 10px;
+  }
+
+  .movie-title {
+    text-align: center;
+    font-weight: bold;
+  }
+
+  /* Set fixed size for poster image */
+  #poster {
+    width: 300px;
+    height: 450px;
+    margin-right: auto;
+    float: right;
+  }
+  #owl-carousel {
+    width: 300px; /* Replace with desired width */
+    height: 150px; /* Replace with desired height */
+  }
+  
+  #carousel-item img {
+    width: 100px; /* Set image width to 100% to fit the container */
+    height: 50px; /* Set image height to 100% to fit the container */
+    object-fit: cover; /* Scale the image to cover the container while maintaining aspect ratio */
+  }
+  #title{
+    margin: right;
+  
+  }
+  #moviemovie{
+    margin: right;
+    
+  }
+  #overview{
+    border-style: solid;
+    text-align: left; /* align text inside the textbox to the right */
+    float: left; /* move the entire textbox to the right */
+    left:80px
+  }
+  .owl-carousel {
+    height: 300px;
+  }
+  .navbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  #userEmail{
+    margin: auto;
+  }
+
+  .navbar-logo {
+    height: 45px;
+    width: auto;
+    margin-right: 10px;
+  }
+
+  .content-wrapper {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-start; /* Add this line to align the items to the top */
+    justify-content: space-between; /* Add this line to space the items apart */
+  }
+  
+  .left-side-content {
+    width: 40%;
+    padding: 100px;
+    font-size: 1.1em;
+    line-height: 1.6em;
+    margin-top: 125px; /* Add this line to push the left-side-content down */
+  }
+  
+  .right-side-content {
+    width: 50%; /* Change from 60% to 50% */
+    margin-left: 25%; /* Add this line to move the right-side-content to the right */
+    margin-top: 25px;
+  }
+  
+  #title {
+    margin-top: 20px; /* Add this line to push the title down */
+  }
+  
+  .left-side-content,
+  .right-side-content {
+    vertical-align: top;
+  }
+  
+
+.left-side-content h2 {
+  font-size: 1.8em;
+  margin-bottom: 15px;
+}
+
+.left-side-content p {
+  margin-bottom: 15px;
+}
+
+body {
+  font-family: Arial, sans-serif;
+}
+

@@ -1,0 +1,399 @@
+<!-- Single Movie Page HTML -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Movie Info</title>
+    <link rel="icon" href="CC_logo.ico" type="image/x-icon" />
+    <link
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.3/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- Add Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  </head>
+  <body>
+    <!-- Navbar HTML -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light w-100">
+      <a href="index.html">
+        <img src="CC_logo.jpg" alt="Logo" class="navbar-logo" />
+      </a>
+      <a class="navbar-brand" href="/">Chromatic Cinema </a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-toggle="collapse"
+        data-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" href="/">Home</a>
+          </li>
+          <li class="nav-item" id="searchNavItem" style="display: none">
+            <a class="nav-link" href="/search.html">Search</a>
+          </li>
+          <li class="nav-item" id="profileNavItem" style="display: none">
+            <a class="nav-link" href="/profile.html">Profile</a>
+          </li>
+          <li class="nav-item" id="signupNavItem">
+            <a class="nav-link" href="/signUp.html">Sign Up</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a
+              class="nav-link dropdown-toggle"
+              href="#"
+              id="themesDropdown"
+              role="button"
+              data-toggle="dropdown"
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
+              Themes
+            </a>
+            <div class="dropdown-menu" aria-labelledby="themesDropdown">
+              <a class="dropdown-item" href="#" onclick="setTheme('red')"
+                >Red</a
+              >
+              <a class="dropdown-item" href="#" onclick="setTheme('green')"
+                >Green</a
+              >
+              <a class="dropdown-item" href="#" onclick="setTheme('blue')"
+                >Blue</a
+              >
+              <a class="dropdown-item" href="#" onclick="setTheme('yellow')"
+                >Yellow</a
+              >
+              <a class="dropdown-item" href="#" onclick="setTheme('purple')"
+                >Purple</a
+              >
+            </div>
+          </li>
+          <li class="nav-item" id="logoutNavItem" style="display: none">
+            <a class="nav-link" href="#" id="logoutButton">Log Out</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    <h1 id="title"></h1>
+
+    <div class="row">
+      <div class="col-sm-6" id="moviemovie">
+        <img id="poster" src="" alt="Poster" style="display: none" />
+      </div>
+      <div class="col-lg-6" style="display: none">
+        <h2 class="border border-dark" id="overview">Overview</h2>
+        <p id="vote_average"></p>
+        <p id="vote_count"></p>
+        <p id="budget"></p>
+        <h3>Genre</h3>
+        <ul id="genres"></ul>
+      </div>
+    </div>
+
+    <div id="container">
+      <div class="col-lg-6" style="display: none">
+        <h2 id="overview">Overview</h2>
+        <p id="vote_average"></p>
+        <p id="vote_count"></p>
+        <p id="budget"></p>
+        <h3>Genre</h3>
+        <ul id="genres"></ul>
+      </div>
+    </div>
+
+    <div id="container">
+      <h1 id="title"></h1>
+      <p id="vote_average"></p>
+      <p id="vote_count"></p>
+      <p id="budget"></p>
+      <ul id="genres"></ul>
+      <button
+        id="favoritesButton"
+        class="btn btn-primary"
+        style="display: none"
+      >
+        Add to Favorites
+      </button>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <script>
+      /**
+       * Initializes the Firebase app and updates the UI based on the user's authentication state.
+       * @async
+       */
+      async function initializeFirebase() {
+        const response = await fetch("/firebaseConfig");
+        const firebaseConfig = await response.json();
+
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        updateUI();
+      }
+
+      /**
+       * Updates the website UI based on the user's authentication state.
+       */
+      function updateUI() {
+        firebase.auth().onAuthStateChanged(function (user) {
+          if (user) {
+            document.getElementById("searchNavItem").style.display = "block";
+            document.getElementById("profileNavItem").style.display = "block";
+            document.getElementById("logoutNavItem").style.display = "block";
+            document.getElementById("signupNavItem").style.display = "none";
+            getMovie(movieId);
+          } else {
+            document.getElementById("searchNavItem").style.display = "none";
+            document.getElementById("profileNavItem").style.display = "none";
+            document.getElementById("logoutNavItem").style.display = "none";
+            document.getElementById("signupNavItem").style.display = "block";
+            window.location.href = "/signUp.html?logged_out=true";
+          }
+        });
+      }
+
+      initializeFirebase()
+        .then(() => {
+          // Set the theme on page load
+          getTheme();
+        })
+        .catch((error) => {
+          console.error("Failed to initialize Firebase:", error);
+        });
+
+      // Get movie ID from URL query string
+      const queryString = window.location.search;
+      const urlParams = new URLSearchParams(queryString);
+      const movieId = urlParams.get("id");
+
+      /**
+       * Fetches movie data from the API and updates the HTML elements with the movie details.
+       * @async
+       * @param {string} movieId - The ID of the movie to fetch.
+       */
+      async function getMovie(movieId) {
+        const url = `/movie/${movieId}`;
+
+        try {
+          const auth = firebase.auth();
+          const idToken = await auth.currentUser.getIdToken(
+            /* forceRefresh */ true
+          );
+
+          const response = await axios.get(url, {
+            headers: { Authorization: `Bearer ${idToken}` },
+          });
+
+          const data = response.data;
+
+          // Update title and poster image
+          const container = document.getElementById("container");
+          container.style.display = "block";
+
+          const title = document.getElementById("title");
+          title.innerHTML = data.title;
+
+          const poster = document.getElementById("poster");
+          poster.src = data.poster;
+          poster.style.display = "inline";
+
+          const overview = document.getElementById("overview");
+          overview.innerHTML = data.overview;
+
+          const voteAverage = document.getElementById("vote_average");
+          voteAverage.innerHTML = `Average rating: ${data.vote_average}`;
+
+          const voteCount = document.getElementById("vote_count");
+          voteCount.innerHTML = `Number of votes: ${data.vote_count}`;
+
+          const budget = document.getElementById("budget");
+          budget.innerHTML = `Budget: ${data.budget}`;
+
+          const genres = document.getElementById("genres");
+          genres.innerHTML = "";
+          data.genres.forEach((genre) => {
+            const li = document.createElement("li");
+            li.innerHTML = genre.name;
+            genres.appendChild(li);
+          });
+          const movieDetails = document.querySelector(".col-lg-6");
+          movieDetails.style.display = "block";
+          document.getElementById("addToFavorites").style.display = "block";
+        } catch (error) {
+          console.log(error);
+          //alert("Failed to fetch movie.");
+        }
+        checkIfMovieInFavorites(movieId);
+      }
+
+      /**
+       * Checks if the movie with the given ID is in the user's favorites and updates the favorites button accordingly.
+       * @async
+       * @param {string} movieId - The ID of the movie to check.
+       */
+      async function checkIfMovieInFavorites(movieId) {
+        try {
+          const auth = firebase.auth();
+          const idToken = await auth.currentUser.getIdToken(true);
+
+          const response = await axios.get(`/favorites/check/${movieId}`, {
+            headers: { Authorization: `Bearer ${idToken}` },
+          });
+
+          const favoritesButton = document.getElementById("favoritesButton");
+
+          if (response.data.isFavorite) {
+            favoritesButton.innerHTML = "Remove from Favorites";
+            favoritesButton.classList.remove("btn-primary");
+            favoritesButton.classList.add("btn-danger");
+          } else {
+            favoritesButton.innerHTML = "Add to Favorites";
+            favoritesButton.classList.remove("btn-danger");
+            favoritesButton.classList.add("btn-primary");
+          }
+
+          favoritesButton.style.display = "block";
+        } catch (error) {
+          console.error(
+            `Error while checking favorite movie: ${error.message}`
+          );
+        }
+      }
+
+      /**
+       * Sets the website's theme color and updates the background color accordingly.
+       * @param {string} color - The new theme color.
+       */
+      function setTheme(color) {
+        axios
+          .post("/theme", { color: color })
+          .then((response) => {
+            console.log("Theme color updated:", response.data.color);
+
+            // Update the background color
+            const body = document.querySelector("body");
+            body.classList.remove(
+              "bg-red",
+              "bg-green",
+              "bg-blue",
+              "bg-yellow",
+              "bg-purple"
+            );
+            body.classList.add(`bg-${color}`);
+
+            getMovie(movieId);
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+      }
+
+      /**
+       * Fetches the current theme color from the server and updates the background color of the page accordingly.
+       * @returns {Promise<void>} A Promise that resolves when the theme color has been applied.
+       */
+      async function getTheme() {
+        try {
+          const response = await axios.get("/theme");
+          const color = response.data.color;
+
+          // Update the background color
+          const body = document.querySelector("body");
+          body.classList.remove(
+            "bg-red",
+            "bg-green",
+            "bg-blue",
+            "bg-yellow",
+            "bg-purple"
+          );
+          body.classList.add(`bg-${color}`);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      /**
+       * Returns the RGB color code corresponding to a given theme color.
+       * @param {string} color The theme color (e.g., "red", "green", etc.).
+       * @returns {string} The RGB color code (e.g., "255, 0, 0" for red).
+       */
+      function getColorCode(color) {
+        switch (color) {
+          case "red":
+            return "255, 0, 0";
+          case "green":
+            return "0, 255, 0";
+          case "blue":
+            return "0, 0, 255";
+          case "yellow":
+            return "255, 255, 0";
+          case "purple":
+            return "128, 0, 128";
+          default:
+            return "0, 0, 0";
+        }
+      }
+
+      // Log out
+      document
+        .getElementById("logoutButton")
+        .addEventListener("click", async () => {
+          try {
+            await firebase.auth().signOut();
+            localStorage.removeItem("token");
+            alert("User logged out successfully!");
+            window.location.href = "/index.html";
+          } catch (error) {
+            console.error(error);
+            alert("Failed to log out.");
+          }
+        });
+
+      // Add or remove movie from favorites
+      document
+        .getElementById("favoritesButton")
+        .addEventListener("click", async () => {
+          try {
+            const auth = firebase.auth();
+            const idToken = await auth.currentUser.getIdToken(true);
+            const favoritesButton = document.getElementById("favoritesButton");
+
+            if (favoritesButton.innerHTML === "Add to Favorites") {
+              const response = await axios.post(`/favorites/${movieId}`, null, {
+                headers: { Authorization: `Bearer ${idToken}` },
+              });
+
+              if (response.status === 200) {
+                alert("Movie added to favorites");
+                checkIfMovieInFavorites(movieId);
+              }
+            } else if (favoritesButton.innerHTML === "Remove from Favorites") {
+              const response = await axios.delete(`/favorites/${movieId}`, {
+                headers: { Authorization: `Bearer ${idToken}` },
+              });
+              if (response.status === 200) {
+                alert("Movie removed from favorites");
+                checkIfMovieInFavorites(movieId);
+              }
+            }
+          } catch (error) {
+            console.error(`Error while updating favorites: ${error.message}`);
+          }
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,416 @@
+<!-- Sign Up Page HTML -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="CC_logo.ico" type="image/x-icon" />
+    <title>Firebase Authentication</title>
+    <link
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.3/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- Add Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  </head>
+  <body>
+    <!-- Navbar HTML -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light w-100">
+      <a href="index.html">
+        <img src="CC_logo.jpg" alt="Logo" class="navbar-logo" />
+      </a>
+      <a class="navbar-brand" href="/">Chromatic Cinema </a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-toggle="collapse"
+        data-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" href="/">Home</a>
+          </li>
+          <li class="nav-item" id="searchNavItem" style="display: none">
+            <a class="nav-link" href="/search.html">Search</a>
+          </li>
+          <li class="nav-item" id="profileNavItem" style="display: none">
+            <a class="nav-link" href="/profile.html">Profile</a>
+          </li>
+          <li class="nav-item" id="signupNavItem">
+            <a class="nav-link active" href="/signUp.html">Sign Up</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a
+              class="nav-link dropdown-toggle"
+              href="#"
+              id="themesDropdown"
+              role="button"
+              data-toggle="dropdown"
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
+              Themes
+            </a>
+            <div class="dropdown-menu" aria-labelledby="themesDropdown">
+              <a class="dropdown-item" href="#" onclick="setTheme('red')"
+                >Red</a
+              >
+              <a class="dropdown-item" href="#" onclick="setTheme('green')"
+                >Green</a
+              >
+              <a class="dropdown-item" href="#" onclick="setTheme('blue')"
+                >Blue</a
+              >
+              <a class="dropdown-item" href="#" onclick="setTheme('yellow')"
+                >Yellow</a
+              >
+              <a class="dropdown-item" href="#" onclick="setTheme('purple')"
+                >Purple</a
+              >
+            </div>
+          </li>
+          <li class="nav-item" id="logoutNavItem" style="display: none">
+            <a class="nav-link" href="#" id="logoutButton">Log Out</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    <div class="container py-5 h-100">
+      <div class="row d-flex justify-content-center align-items-center h-100">
+        <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+          <div class="card shadow-2-strong" style="border-radius: 1rem">
+            <div class="card-body p-5 text-center">
+              <h3 class="mb-5">Sign in</h3>
+
+              <div class="form-outline mb-4">
+                <input
+                  type="email"
+                  id="signupEmail"
+                  class="form-control form-control-lg"
+                  onkeydown="onInputKeyDown(event)"
+                />
+                <label class="form-label" for="typeEmailX-2">Email</label>
+              </div>
+
+              <div class="form-outline mb-4">
+                <input
+                  type="password"
+                  id="signupPassword"
+                  class="form-control form-control-lg"
+                  onkeydown="onInputKeyDown(event)"
+                />
+                <label class="form-label" for="typePasswordX-2">Password</label>
+              </div>
+
+              <button
+                class="btn btn-primary btn-lg btn-block"
+                type="submit"
+                id="loginButton"
+              >
+                Login
+              </button>
+
+              <hr class="my-4" />
+
+              <button
+                class="btn btn-lg btn-block btn-primary"
+                id="signupButton"
+                style="background-color: #dd4b39"
+                type="submit"
+              >
+                <i class="fab fa-google me-2"></i> Sign up
+              </button>
+
+              <button
+                class="btn btn-lg btn-block btn-primary"
+                id="googleSignInButton"
+                style="background-color: #dd4b39"
+                type="submit"
+              >
+                <i class="fab fa-google me-2"></i> Sign in with google
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <script>
+      /**
+       * Initializes Firebase using configuration fetched from "/firebaseConfig" endpoint
+       * and updates the UI based on the authentication state of the user.
+       * @returns {Promise<void>}
+       */
+      async function initializeFirebase() {
+        const response = await fetch("/firebaseConfig");
+        const firebaseConfig = await response.json();
+
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+
+        updateUI();
+      }
+
+      /**
+       * Updates the UI based on the authentication state of the user.
+       */
+      function updateUI() {
+        firebase.auth().onAuthStateChanged(function (user) {
+          if (user) {
+            document.getElementById("searchNavItem").style.display = "block";
+            document.getElementById("profileNavItem").style.display = "block";
+            document.getElementById("logoutNavItem").style.display = "block";
+            document.getElementById("signupNavItem").style.display = "none";
+          } else {
+            document.getElementById("searchNavItem").style.display = "none";
+            document.getElementById("profileNavItem").style.display = "none";
+            document.getElementById("logoutNavItem").style.display = "none";
+            document.getElementById("signupNavItem").style.display = "block";
+          }
+        });
+      }
+
+      initializeFirebase()
+        .then(() => {
+          // Set the theme on page load
+          getTheme();
+        })
+        .catch((error) => {
+          console.error("Failed to initialize Firebase:", error);
+        });
+
+      /**
+       * Adds event listener for sign up button and sends a POST request to sign up the user.
+       * @returns {Promise<void>}
+       */
+      document
+        .getElementById("signupButton")
+        .addEventListener("click", async () => {
+          const email = document.getElementById("signupEmail").value;
+          const password = document.getElementById("signupPassword").value;
+          try {
+            const response = await fetch(
+              "/signup",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+              }
+            );
+
+            if (response.ok) {
+              alert("User signed up successfully!");
+            } else {
+              throw new Error(await response.text());
+            }
+          } catch (error) {
+            console.error(error);
+            alert("Failed to sign up.");
+          }
+        });
+
+      /**
+       * Adds event listener for login button and attempts to sign in the user using Firebase authentication.
+       * @returns {Promise<void>}
+       */
+      document
+        .getElementById("loginButton")
+        .addEventListener("click", async () => {
+          const email = document.getElementById("signupEmail").value;
+          const password = document.getElementById("signupPassword").value;
+          try {
+            const userCredential = await firebase
+              .auth()
+              .signInWithEmailAndPassword(email, password);
+            const token = await userCredential.user.getIdToken();
+            localStorage.setItem("token", token);
+            alert("User logged in successfully!");
+            document.getElementById("logoutNavItem").style.display = "block";
+            document.getElementById("signupNavItem").style.display = "none";
+            window.location.href = "/index.html";
+          } catch (error) {
+            console.error(error);
+            alert("Failed to log in.");
+          }
+        });
+
+      /**
+       * Signs in the user using Google authentication.
+       * @returns {Promise<void>}
+       */
+      async function signInWithGoogle() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        try {
+          const userCredential = await firebase
+            .auth()
+            .signInWithPopup(provider);
+          const token = await userCredential.user.getIdToken();
+          const email = userCredential.user.email;
+
+          const response = await fetch(
+            "/signup-with-google",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, token }),
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(await response.text());
+          }
+
+          localStorage.setItem("token", token);
+          alert("User logged in successfully with Google!");
+
+          // Update UI to reflect successful login
+          document.getElementById("logoutNavItem").style.display = "block";
+          document.getElementById("signupNavItem").style.display = "none";
+          window.location.href = "/index.html";
+        } catch (error) {
+          console.error(error);
+          window.location.href = "/index.html";
+          //alert(`Failed to log in with Google. ${error.message}`);
+        }
+      }
+
+      /**
+       * Adds event listener for Google sign in button.
+       */
+      document
+        .getElementById("googleSignInButton")
+        .addEventListener("click", signInWithGoogle);
+
+      /**
+       * Adds event listener for log out button and logs the user out.
+       * @returns {Promise<void>}
+       */
+      document
+        .getElementById("logoutButton")
+        .addEventListener("click", async () => {
+          try {
+            await firebase.auth().signOut();
+            localStorage.removeItem("token");
+            alert("User logged out successfully!");
+            window.location.href = "/index.html";
+          } catch (error) {
+            console.error(error);
+            alert("Failed to log out.");
+          }
+        });
+
+      /**
+       * Sets the theme color and updates the background color of the page.
+       * @param {string} color - The color to set the theme to.
+       * @returns {void}
+       */
+      function setTheme(color) {
+        axios
+          .post("/theme", { color: color })
+          .then((response) => {
+            console.log("Theme color updated:", response.data.color);
+
+            // Update the background color
+            const body = document.querySelector("body");
+            body.classList.remove(
+              "bg-red",
+              "bg-green",
+              "bg-blue",
+              "bg-yellow",
+              "bg-purple"
+            );
+            body.classList.add(`bg-${color}`);
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+      }
+
+      /**
+       * Retrieves the current theme color and updates the background color of the page.
+       * @returns {Promise<void>}
+       */
+      async function getTheme() {
+        try {
+          const response = await axios.get("/theme");
+          const color = response.data.color;
+
+          // Update the background color
+          const body = document.querySelector("body");
+          body.classList.remove(
+            "bg-red",
+            "bg-green",
+            "bg-blue",
+            "bg-yellow",
+            "bg-purple"
+          );
+          body.classList.add(`bg-${color}`);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      /**
+       * Returns the RGB color code for the given color name.
+       * @param {string} color - The name of the color.
+       * @returns {string} - The RGB color code.
+       */
+      function getColorCode(color) {
+        switch (color) {
+          case "red":
+            return "255, 0, 0";
+          case "green":
+            return "0, 255, 0";
+          case "blue":
+            return "0, 0, 255";
+          case "yellow":
+            return "255, 255, 0";
+          case "purple":
+            return "128, 0, 128";
+          default:
+            return "0, 0, 0";
+        }
+      }
+
+      /**
+       * Event listener for input key down event.
+       * If Enter key is pressed, prevents form submission and triggers click event on Login button.
+       * @param {KeyboardEvent} event - The KeyboardEvent object.
+       * @returns {void}
+       */
+      function onInputKeyDown(event) {
+        if (event.keyCode === 13) {
+          event.preventDefault(); // Prevent form submission
+          document.getElementById("loginButton").click(); // Trigger click event on Login button
+        }
+      }
+
+      /**
+       * Shows an alert if the page URL contains the query parameter "logged_out=true".
+       * @returns {void}
+       */
+      setTimeout(function () {
+        if (window.location.search.includes("logged_out=true")) {
+          alert("Need to be logged in to use this feature!");
+        }
+      }, 500);
+    </script>
+  </body>
+</html>

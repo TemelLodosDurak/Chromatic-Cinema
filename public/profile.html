@@ -1,0 +1,335 @@
+<!-- Profile Page HTML -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="CC_logo.ico" type="image/x-icon" />
+    <title>Profile</title>
+    <link
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.3/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- Add Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  </head>
+  <body>
+    <!-- Navbar HTML -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light w-100">
+      <a href="index.html">
+        <img src="CC_logo.jpg" alt="Logo" class="navbar-logo" />
+      </a>
+      <a class="navbar-brand" href="/">Chromatic Cinema </a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-toggle="collapse"
+        data-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" href="/">Home</a>
+          </li>
+          <li class="nav-item" id="searchNavItem" style="display: none">
+            <a class="nav-link" href="/search.html">Search</a>
+          </li>
+          <li class="nav-item" id="profileNavItem" style="display: none">
+            <a class="nav-link active" href="/profile.html">Profile</a>
+          </li>
+          <li class="nav-item" id="signupNavItem">
+            <a class="nav-link" href="/signUp.html">Sign Up</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a
+              class="nav-link dropdown-toggle"
+              href="#"
+              id="themesDropdown"
+              role="button"
+              data-toggle="dropdown"
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
+              Themes
+            </a>
+            <div class="dropdown-menu" aria-labelledby="themesDropdown">
+              <a class="dropdown-item" href="#" onclick="setTheme('red')"
+                >Red</a
+              >
+              <a class="dropdown-item" href="#" onclick="setTheme('green')"
+                >Green</a
+              >
+              <a class="dropdown-item" href="#" onclick="setTheme('blue')"
+                >Blue</a
+              >
+              <a class="dropdown-item" href="#" onclick="setTheme('yellow')"
+                >Yellow</a
+              >
+              <a class="dropdown-item" href="#" onclick="setTheme('purple')"
+                >Purple</a
+              >
+            </div>
+          </li>
+          <li class="nav-item" id="logoutNavItem" style="display: none">
+            <a class="nav-link" href="#" id="logoutButton">Log Out</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    <div class="container">
+      <h1 id="userEmail"></h1>
+      <h2 id="favorite">Your Favorite Movies</h2>
+      <div id="favoriteMovies" class="movie-cards-container"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <script>
+      /**
+       * Initializes Firebase by fetching the Firebase configuration from "/firebaseConfig"
+       * and initializing Firebase using the configuration. Calls updateUI to update the UI
+       * after Firebase has been initialized.
+       *
+       * @returns {Promise<void>} A promise that resolves when Firebase has been initialized
+       * and updateUI has been called.
+       * @throws {Error} If Firebase fails to initialize.
+       */
+      async function initializeFirebase() {
+        const response = await fetch("/firebaseConfig");
+        const firebaseConfig = await response.json();
+
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        updateUI();
+      }
+
+      /**
+       * Updates the UI based on the user's authentication status.
+       */
+      function updateUI() {
+        firebase.auth().onAuthStateChanged(function (user) {
+          if (user) {
+            document.getElementById("searchNavItem").style.display = "block";
+            document.getElementById("profileNavItem").style.display = "block";
+            document.getElementById("logoutNavItem").style.display = "block";
+            document.getElementById("signupNavItem").style.display = "none";
+            getUserProfile();
+          } else {
+            document.getElementById("searchNavItem").style.display = "none";
+            document.getElementById("profileNavItem").style.display = "none";
+            document.getElementById("logoutNavItem").style.display = "none";
+            document.getElementById("signupNavItem").style.display = "block";
+            window.location.href = "/signUp.html?logged_out=true";
+          }
+        });
+      }
+
+      // Initialize Firebase and set the theme on page load.
+      initializeFirebase()
+        .then(() => {
+          getTheme();
+        })
+        .catch((error) => {
+          console.error("Failed to initialize Firebase:", error);
+        });
+
+      /**
+       * Fetches the current user's profile and favorite movies from the server using Firebase authentication
+       * and displays the user's email and favorite movies in the UI.
+       *
+       * @returns {Promise<void>} A promise that resolves when the user's profile and favorite movies have
+       * been fetched and displayed in the UI.
+       * @throws {Error} If there is an error fetching the user's profile or favorite movies.
+       */
+      async function getUserProfile() {
+        try {
+          const user = firebase.auth().currentUser;
+          const token = await user.getIdToken();
+
+          // Fetch user profile
+          const response = await axios.get("/profile", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const userProfile = response.data;
+          console.log("User Profile:", userProfile);
+
+          document.getElementById(
+            "userEmail"
+          ).textContent = `Welcome, ${user.email}`;
+
+          // Fetch favorite movies
+          const favoritesResponse = await axios.get("/favorites", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const favoriteMovies = Object.values(favoritesResponse.data);
+          console.log("Favorite Movies:", favoriteMovies);
+
+          // Display favorite movies
+          const favoriteMoviesContainer =
+            document.getElementById("favoriteMovies");
+          favoriteMoviesContainer.innerHTML = "";
+          favoriteMovies.forEach((movie) => {
+            const movieCard = createMovieCard(movie);
+            favoriteMoviesContainer.appendChild(movieCard);
+          });
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+        }
+      }
+
+      /**
+       * Creates a DOM element that displays a movie poster and title and redirects the user
+       * to the movie's details page when clicked.
+       *
+       * @param {Object} movie - An object representing a movie, with properties "id", "title", and "poster".
+       * @returns {HTMLElement} A DOM element that displays the movie poster and title and can be clicked
+       * to redirect the user to the movie's details page.
+       */
+      function createMovieCard(movie) {
+        const movieCard = document.createElement("div");
+        movieCard.classList.add("movie-card");
+
+        const moviePoster = document.createElement("img");
+        moviePoster.classList.add("movie-poster");
+        moviePoster.src = movie.poster;
+        moviePoster.onerror = function () {
+          movieCard.remove();
+        };
+        movieCard.appendChild(moviePoster);
+
+        const movieTitle = document.createElement("div");
+        movieTitle.classList.add("movie-title");
+        movieTitle.textContent = movie.title;
+        movieCard.appendChild(movieTitle);
+
+        // Add click event listener to redirect to movie page
+        movieCard.addEventListener("click", () => {
+          window.location.href = `/movie.html?id=${movie.id}`;
+        });
+
+        return movieCard;
+      }
+
+      /**
+       * Sets the theme color of the application by sending a POST request to the server.
+       *
+       * @param {string} color - The new theme color, as a string representing a CSS class name ("red", "green", "blue", "yellow", or "purple").
+       * @returns {void}
+       * @throws {Error} If there is an error setting the theme color.
+       */
+      function setTheme(color) {
+        axios
+          .post("/theme", { color: color })
+          .then((response) => {
+            console.log("Theme color updated:", response.data.color);
+
+            // Update the background color
+            const body = document.querySelector("body");
+            body.classList.remove(
+              "bg-red",
+              "bg-green",
+              "bg-blue",
+              "bg-yellow",
+              "bg-purple"
+            );
+            body.classList.add(`bg-${color}`);
+            getUserProfile();
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+      }
+
+      /**
+       * Fetches the current theme color from the server and updates the background color of the page.
+       *
+       * @returns {Promise<void>} A promise that resolves when the theme color has been fetched and the background color has been updated.
+       * @throws {Error} If there is an error fetching the theme color.
+       */
+      async function getTheme() {
+        try {
+          const response = await axios.get("/theme");
+          const color = response.data.color;
+
+          // Update the background color
+          const body = document.querySelector("body");
+          body.classList.remove(
+            "bg-red",
+            "bg-green",
+            "bg-blue",
+            "bg-yellow",
+            "bg-purple"
+          );
+          body.classList.add(`bg-${color}`);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      /**
+       * Returns the RGB color code for a given color string.
+       *
+       * @param {string} color - A string representing a color ("red", "green", "blue", "yellow", or "purple").
+       * @returns {string} The RGB color code for the given color, as a string.
+       */
+      function getColorCode(color) {
+        switch (color) {
+          case "red":
+            return "255, 0, 0";
+          case "green":
+            return "0, 255, 0";
+          case "blue":
+            return "0, 0, 255";
+          case "yellow":
+            return "255, 255, 0";
+          case "purple":
+            return "128, 0, 128";
+          default:
+            return "0, 0, 0";
+        }
+      }
+
+      // Log out
+      /**
+       * Event listener that logs out the current user and redirects them to the index page.
+       *
+       * @listens click
+       * @returns {void}
+       * @throws {Error} If there is an error logging out the user.
+       */
+      document
+        .getElementById("logoutButton")
+        .addEventListener("click", async () => {
+          try {
+            await firebase.auth().signOut();
+            localStorage.removeItem("token");
+            alert("User logged out successfully!");
+            window.location.href = "/index.html";
+          } catch (error) {
+            console.error(error);
+            alert("Failed to log out.");
+          }
+        });
+    </script>
+  </body>
+</html>
